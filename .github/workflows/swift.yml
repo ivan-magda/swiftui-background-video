@@ -18,11 +18,12 @@ jobs:
         with:
           xcode-version: "16.2"
 
-      - name: Build
-        run: swift build -v
-
-      - name: Run tests
-        run: swift test -v
+      - uses: sersoft-gmbh/xcodebuild-action@v3
+        with:
+          spm-package: "./"
+          scheme: SwiftUIBackgroundVideo
+          destination: platform=iOS
+          action: test
 
   lint:
     runs-on: ubuntu-latest
