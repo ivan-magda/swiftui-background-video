@@ -18,12 +18,14 @@ jobs:
         with:
           xcode-version: "16.2"
 
-      - uses: sersoft-gmbh/xcodebuild-action@v3
-        with:
-          spm-package: "./"
-          scheme: SwiftUIBackgroundVideo
-          destination: platform=iphonesimulator18.2
-          action: test
+      - name: Build & Test for iOS
+        run: |
+          xcodebuild test \
+            -scheme SwiftUIBackgroundVideo \
+            -destination "platform=iOS Simulator,OS=18.2,name=iPhone 16" \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
 
   lint:
     runs-on: ubuntu-latest
