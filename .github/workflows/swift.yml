@@ -22,7 +22,7 @@ jobs:
         with:
           spm-package: "./"
           scheme: SwiftUIBackgroundVideo
-          destination: platform=iOS
+          destination: platform=iphonesimulator
           action: test
 
   lint:
