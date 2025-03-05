@@ -18,12 +18,6 @@ jobs:
         with:
           xcode-version: "16.1"
 
-      - name: showdestinations
-        run: |
-          xcodebuild test \
-            -scheme SwiftUIBackgroundVideo \
-            -showdestinations
-
       - name: Build & Test for iOS
         run: |
           xcodebuild test \
