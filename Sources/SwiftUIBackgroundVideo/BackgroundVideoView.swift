@@ -1,10 +1,20 @@
 import SwiftUI
 
 public struct BackgroundVideoView: UIViewRepresentable {
-    public let resourceName: String
-    public let resourceType: String
+    let resourceName: String
+    let resourceType: String
 
-    public var onStateChanged: ((VideoPlayerState) -> Void)?
+    var onStateChanged: ((VideoPlayerState) -> Void)?
+
+    public init(
+        resourceName: String,
+        resourceType: String,
+        onStateChanged: ((VideoPlayerState) -> Void)? = nil
+    ) {
+        self.resourceName = resourceName
+        self.resourceType = resourceType
+        self.onStateChanged = onStateChanged
+    }
 
     public static func dismantleUIView(_ uiView: BackgroundVideoUIView, coordinator: Void) {
         uiView.stateDidChange = nil

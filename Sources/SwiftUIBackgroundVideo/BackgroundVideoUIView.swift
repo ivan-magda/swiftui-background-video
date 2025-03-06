@@ -26,7 +26,7 @@ public class BackgroundVideoUIView: UIView {
         player?.rate != 0 && player?.error == nil
     }
 
-    init(frame: CGRect = .zero, resourceName: String? = nil, resourceType: String? = nil) {
+    public init(frame: CGRect = .zero, resourceName: String? = nil, resourceType: String? = nil) {
         super.init(frame: frame)
 
         setupObservers()
