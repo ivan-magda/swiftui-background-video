@@ -68,6 +68,10 @@ public class BackgroundVideoUIView: UIView {
     }
 
     func prepareAndPlayVideo(with resourceName: String, ofType type: String) {
+        guard !playerState.isLoading else {
+            return
+        }
+
         guard currentResourceName != resourceName || currentResourceType != type else {
             return play()
         }

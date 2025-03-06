@@ -6,4 +6,11 @@ public enum VideoPlayerState {
     case playing
     case paused
     case failed(Error)
+
+    var isLoading: Bool {
+        if case .loading = self {
+            return true
+        }
+        return false
+    }
 }
