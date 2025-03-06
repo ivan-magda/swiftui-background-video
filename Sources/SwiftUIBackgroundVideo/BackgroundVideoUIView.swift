@@ -18,7 +18,6 @@ public class BackgroundVideoUIView: UIView {
     private var playerLayer: AVPlayerLayer?
     private var playerLooper: AVPlayerLooper?
     private var player: AVQueuePlayer?
-    private var cancellables = Set<AnyCancellable>()
 
     private var loadAssetTask: Task<Void, Never>?
 
@@ -56,8 +55,6 @@ public class BackgroundVideoUIView: UIView {
     func cleanupPlayer() {
         loadAssetTask?.cancel()
         loadAssetTask = nil
-
-        cancellables.removeAll()
 
         player?.pause()
         playerLooper = nil
@@ -169,22 +166,7 @@ public class BackgroundVideoUIView: UIView {
             .forEach { $0.removeFromSuperlayer() }
         layer.addSublayer(playerLayer)
 
-        playerItem.publisher(for: \.status)
-            .sink { [weak self] status in
-                guard let self else {
-                    return
-                }
-
-                switch status {
-                case .readyToPlay:
-                    self.play()
-                case .failed:
-                    self.playerState = .failed(playerItem.error ?? VideoPlayerError.playbackFailed)
-                default:
-                    break
-                }
-            }
-            .store(in: &cancellables)
+        play()
     }
 
     private func play() {
