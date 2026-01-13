@@ -6,6 +6,10 @@
 
 A Swift package for easily adding looping background videos to your iOS apps with SwiftUI.
 
+<p align="leading">
+  <img src="demo/demo-basic.gif" width="240" alt="Basic Demo">&nbsp;&nbsp;&nbsp;&nbsp;<img src="demo/demo-theme.gif" width="240" alt="Theme-Aware Demo">
+</p>
+
 ## Features
 
 - Simple SwiftUI integration
@@ -32,6 +36,7 @@ dependencies: [
 ```
 
 Or add it directly through Xcode:
+
 1. Go to File > Add Packages...
 2. Enter package repository URL: `https://github.com/ivan-magda/swiftui-background-video.git`
 3. Click "Add Package"
@@ -48,10 +53,10 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             BackgroundVideoView(
-                resourceName: "background_video", 
+                resourceName: "background_video",
                 resourceType: "mp4"
             )
-            
+
             VStack {
                 Text("Hello, World!")
                     .foregroundColor(.white)
@@ -72,25 +77,25 @@ import UIKit
 import SwiftUIBackgroundVideo
 
 class ViewController: UIViewController {
-    
+
     private var videoView: BackgroundVideoUIView?
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // Create and add the video view
-        videoView = BackgroundVideoUIView( 
-            resourceName: "background_video", 
+        videoView = BackgroundVideoUIView(
+            resourceName: "background_video",
             resourceType: "mp4"
         )
         videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(videoView)
-        
+
         // Monitor state changes if needed
         videoView.stateDidChange = { state in
             print("Video state changed to: \(state)")
         }
-        
+
         // Add content on top
         let label = UILabel()
         label.text = "Hello, World!"
@@ -101,7 +106,7 @@ class ViewController: UIViewController {
         label.layer.cornerRadius = 10
         label.clipsToBounds = true
         label.translatesAutoresizingMaskIntoConstraints = false
-        
+
         view.addSubview(label)
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
