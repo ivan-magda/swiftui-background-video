@@ -23,11 +23,11 @@ BackgroundVideoView(resourceName: "background", resourceType: "mp4")
 
 **Alternatives:**
 
-| Package | Verdict |
-|---------|---------|
+| Package                      | Verdict                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
 | **swiftui-loop-videoPlayer** | Feature-heavy (subtitles, Metal shaders, PiP). Good if you need those; overkill for backgrounds. |
-| **SwiftVideoBackground** | UIKit-only, last updated 2019, no SPM support. |
-| **DIY** | 80+ lines of boilerplate you'll copy from Stack Overflow anyway. |
+| **SwiftVideoBackground**     | UIKit-only, last updated 2019, no SPM support.                                                   |
+| **DIY**                      | 80+ lines of boilerplate you'll copy from Stack Overflow anyway.                                 |
 
 ## Features
 
@@ -159,7 +159,7 @@ class ViewController: UIViewController {
             resourceType: "mp4"
         )
         videoView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        
+
         if let videoView = videoView {
             view.addSubview(videoView)
         }
@@ -205,38 +205,38 @@ class ViewController: UIViewController {
 
 ### BackgroundVideoView (SwiftUI)
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `resourceName` | `String` | Video filename without extension |
-| `resourceType` | `String` | File extension (e.g., "mp4", "mov") |
-| `onStateChanged` | `((VideoPlayerState) -> Void)?` | Optional state change callback |
+| Parameter        | Type                            | Description                         |
+| ---------------- | ------------------------------- | ----------------------------------- |
+| `resourceName`   | `String`                        | Video filename without extension    |
+| `resourceType`   | `String`                        | File extension (e.g., "mp4", "mov") |
+| `onStateChanged` | `((VideoPlayerState) -> Void)?` | Optional state change callback      |
 
 ### BackgroundVideoUIView (UIKit)
 
-| Property/Method | Type | Description |
-|-----------------|------|-------------|
-| `stateDidChange` | `((VideoPlayerState) -> Void)?` | State change callback |
-| `playerState` | `VideoPlayerState` | Current playback state (read-only) |
-| `prepareAndPlayVideo(with:ofType:)` | Method | Load and play a different video |
-| `cleanupPlayer()` | Method | Stop playback and release resources |
+| Property/Method                     | Type                            | Description                         |
+| ----------------------------------- | ------------------------------- | ----------------------------------- |
+| `stateDidChange`                    | `((VideoPlayerState) -> Void)?` | State change callback               |
+| `playerState`                       | `VideoPlayerState`              | Current playback state (read-only)  |
+| `prepareAndPlayVideo(with:ofType:)` | Method                          | Load and play a different video     |
+| `cleanupPlayer()`                   | Method                          | Stop playback and release resources |
 
 ### VideoPlayerState
 
-| Case | Description |
-|------|-------------|
-| `.idle` | Player initialized, no video loaded |
-| `.loading` | Video asset loading asynchronously |
-| `.playing` | Video actively playing |
-| `.paused` | Playback paused (background/interruption) |
-| `.failed(Error)` | Loading or playback failed |
+| Case             | Description                               |
+| ---------------- | ----------------------------------------- |
+| `.idle`          | Player initialized, no video loaded       |
+| `.loading`       | Video asset loading asynchronously        |
+| `.playing`       | Video actively playing                    |
+| `.paused`        | Playback paused (background/interruption) |
+| `.failed(Error)` | Loading or playback failed                |
 
 ### VideoPlayerError
 
-| Case | Description |
-|------|-------------|
-| `.resourceNotFound` | Video file not in app bundle |
-| `.invalidResource` | File exists but can't be played |
-| `.playbackFailed` | Runtime playback error |
+| Case                | Description                     |
+| ------------------- | ------------------------------- |
+| `.resourceNotFound` | Video file not in app bundle    |
+| `.invalidResource`  | File exists but can't be played |
+| `.playbackFailed`   | Runtime playback error          |
 
 ## How It Works
 
