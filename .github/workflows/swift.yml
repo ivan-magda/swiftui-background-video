@@ -22,7 +22,7 @@ jobs:
         run: |
           xcodebuild test \
             -scheme SwiftUIBackgroundVideo \
-            -destination "platform=iOS Simulator,OS=18.5,name=iPhone 16" \
+            -destination "platform=iOS Simulator,name=Any iOS Simulator Device" \
             -configuration Debug \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO
