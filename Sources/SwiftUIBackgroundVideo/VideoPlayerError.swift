@@ -17,7 +17,7 @@ import Foundation
 ///     print("Playback failed: \(error)")
 /// }
 /// ```
-public enum VideoPlayerError: Error {
+public enum VideoPlayerError: Error, Sendable {
     /// The specified video resource could not be found in the app bundle.
     ///
     /// This error occurs when `Bundle.main.path(forResource:ofType:)` returns `nil`,

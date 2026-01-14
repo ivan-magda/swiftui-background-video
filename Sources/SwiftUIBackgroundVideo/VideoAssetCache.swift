@@ -19,6 +19,7 @@ import UIKit
 /// // Store an asset
 /// VideoAssetCache.shared.set(asset: loadedAsset, forKey: "intro.mp4")
 /// ```
+@MainActor
 final class VideoAssetCache {
     /// The maximum number of assets to keep in the cache.
     private static let maxCacheSize: Int = 3

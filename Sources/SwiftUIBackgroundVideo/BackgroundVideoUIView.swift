@@ -83,7 +83,10 @@ public class BackgroundVideoUIView: UIView {
     private var player: AVQueuePlayer?
 
     /// The current asset loading task.
-    private var loadAssetTask: Task<Void, Never>?
+    ///
+    /// Marked `nonisolated(unsafe)` to allow cancellation from `deinit`.
+    /// This is safe because `Task.cancel()` is thread-safe.
+    private nonisolated(unsafe) var loadAssetTask: Task<Void, Never>?
 
     /// A Boolean value indicating whether the video is currently playing.
     private var isPlaying: Bool {
@@ -131,7 +134,7 @@ public class BackgroundVideoUIView: UIView {
 
     deinit {
         removeObservers()
-        cleanupPlayer()
+        loadAssetTask?.cancel()
     }
 
     /// Updates the player layer frame to match the view bounds.
@@ -197,20 +200,27 @@ public class BackgroundVideoUIView: UIView {
 
         cleanupPlayer()
 
-        loadAssetTask = Task {
+        loadAssetTask = Task { [weak self] in
+            guard let self else {
+                return
+            }
+
             do {
-                let asset = try await loadAsset(resourceName: resourceName, resourceType: type)
+                let asset = try await self.loadAsset(
+                    resourceName: resourceName,
+                    resourceType: type
+                )
 
                 guard !Task.isCancelled else {
                     return
                 }
 
                 await MainActor.run {
-                    setupPlayer(with: asset)
+                    self.setupPlayer(with: asset)
                 }
             } catch {
                 await MainActor.run {
-                    playerState = .failed(error)
+                    self.playerState = .failed(error)
                 }
             }
         }
@@ -344,7 +354,7 @@ extension BackgroundVideoUIView {
     /// Removes all notification observers from this view.
     ///
     /// Called automatically in `deinit` and by ``BackgroundVideoView/dismantleUIView(_:coordinator:)``.
-    func removeObservers() {
+    nonisolated func removeObservers() {
         // swiftlint:disable:next notification_center_detachment
         NotificationCenter.default.removeObserver(self)
     }

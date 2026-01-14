@@ -20,7 +20,6 @@ let package = Package(
         .testTarget(
             name: "SwiftUIBackgroundVideoTests",
             dependencies: ["SwiftUIBackgroundVideo"]
-        )
-    ],
-    swiftLanguageModes: [.v5]
+        ),
+    ]
 )
