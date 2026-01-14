@@ -86,7 +86,7 @@ public class BackgroundVideoUIView: UIView {
     ///
     /// Marked `nonisolated(unsafe)` to allow cancellation from `deinit`.
     /// This is safe because `Task.cancel()` is thread-safe.
-    private nonisolated(unsafe) var loadAssetTask: Task<Void, Never>?
+    nonisolated(unsafe) private var loadAssetTask: Task<Void, Never>?
 
     /// A Boolean value indicating whether the video is currently playing.
     private var isPlaying: Bool {
