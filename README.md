@@ -1,6 +1,6 @@
 # SwiftUIBackgroundVideo
 
-[![Swift](https://img.shields.io/badge/Swift-5.5+-orange?style=flat-square)](https://img.shields.io/badge/Swift-5.5+-orange?style=flat-square)
+[![Swift](https://img.shields.io/badge/Swift-6.0+-orange?style=flat-square)](https://img.shields.io/badge/Swift-6.0+-orange?style=flat-square)
 [![Platforms](https://img.shields.io/badge/Platforms-iOS-yellowgreen?style=flat-square)](https://img.shields.io/badge/Platforms-iOS-green?style=flat-square)
 [![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
@@ -42,8 +42,8 @@ BackgroundVideoView(resourceName: "background", resourceType: "mp4")
 ## Requirements
 
 - iOS 13.0+
-- Swift 5.5+
-- Xcode 13+
+- Swift 6.0+
+- Xcode 16+
 
 ## Installation
 
@@ -53,7 +53,7 @@ Add SwiftUIBackgroundVideo to your project by adding it as a dependency in your 
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ivan-magda/swiftui-background-video.git", from: "1.0.0")
+    .package(url: "https://github.com/ivan-magda/swiftui-background-video.git", from: "1.1.0")
 ]
 ```
 
