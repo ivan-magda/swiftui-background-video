@@ -164,7 +164,8 @@ public final class BackgroundVideoUIView: UIView {
         playerLooper = nil
         player = nil
 
-        playerLayer?.removeFromSuperlayer()
+        // Don't remove playerLayer from superlayer here -- setupPlayer handles
+        // crossfade removal. Only nil the reference.
         playerLayer = nil
     }
 
