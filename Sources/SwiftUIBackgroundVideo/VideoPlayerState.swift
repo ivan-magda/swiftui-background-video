@@ -22,10 +22,12 @@ import Foundation
 ///     }
 /// }
 /// ```
-// SAFETY: @unchecked Sendable because all simple cases are value types and the
-// associated Error is only stored, never mutated concurrently. The primary error
-// type (VideoPlayerError) is already Sendable.
-// TODO: Migrate to `any Error & Sendable` in a future breaking API change.
+///
+/// Marked `@unchecked Sendable` because all simple cases are value types
+/// and the associated `Error` is only stored, never mutated concurrently.
+/// The primary error type (`VideoPlayerError`) is already `Sendable`.
+///
+/// Consider migrating to `any Error & Sendable` in a future breaking API change.
 public enum VideoPlayerState: @unchecked Sendable, Equatable {
     /// The player has been initialized but no video has been loaded.
     ///

@@ -86,7 +86,7 @@ public final class BackgroundVideoUIView: UIView {
     ///
     /// Marked `nonisolated(unsafe)` to allow cancellation from `deinit`.
     /// This is safe because `Task.cancel()` is thread-safe.
-    /// TODO: Replace with `isolated deinit` when targeting Swift 6.2+ (iOS 18.4+).
+    /// Replace with `isolated deinit` when targeting Swift 6.2+ (iOS 18.4+).
     nonisolated(unsafe) private var loadAssetTask: Task<Void, Never>?
 
     /// A Boolean value indicating whether the video is currently playing.
@@ -203,7 +203,9 @@ public final class BackgroundVideoUIView: UIView {
         cleanupPlayer()
 
         loadAssetTask = Task { [weak self] in
-            guard let self else { return }
+            guard let self else {
+                return
+            }
 
             do {
                 let asset = try await self.loadAsset(
@@ -211,7 +213,9 @@ public final class BackgroundVideoUIView: UIView {
                     resourceType: type
                 )
 
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else {
+                    return
+                }
 
                 self.setupPlayer(with: asset)
             } catch is CancellationError {
