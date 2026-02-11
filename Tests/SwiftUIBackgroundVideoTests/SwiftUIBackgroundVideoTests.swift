@@ -1,17 +1,18 @@
-import XCTest
+import Testing
 @testable import SwiftUIBackgroundVideo
 @preconcurrency import AVFoundation
 
-final class SwiftUIBackgroundVideoTests: XCTestCase {
-    @MainActor
-    func test_CacheReturnsNilForUnknownKey() {
+@Suite(.serialized) @MainActor
+struct SwiftUIBackgroundVideoTests {
+    @Test
+    func cacheReturnsNilForUnknownKey() {
         let unknownKey = "doesNotExist"
         let result = VideoAssetCache.shared.asset(forKey: unknownKey)
-        XCTAssertNil(result, "Cache should return nil for an unknown key.")
+        #expect(result == nil)
     }
 
-    @MainActor
-    func test_CacheStoresAndRetrievesAsset() {
+    @Test
+    func cacheStoresAndRetrievesAsset() {
         let testURL = URL(fileURLWithPath: "/dev/null") // Fake URL
         let asset = AVAsset(url: testURL)
 
@@ -19,110 +20,87 @@ final class SwiftUIBackgroundVideoTests: XCTestCase {
         VideoAssetCache.shared.set(asset: asset, forKey: key)
 
         let cachedAsset = VideoAssetCache.shared.asset(forKey: key)
-        XCTAssertNotNil(cachedAsset, "Cache should return the stored asset.")
-        XCTAssertEqual(cachedAsset, asset, "Retrieved asset should match the one stored.")
+        #expect(cachedAsset != nil)
+        #expect(cachedAsset == asset)
     }
 
-    @MainActor
-    func test_loadAssetThrowsResourceNotFound() async throws {
+    @Test
+    func loadAssetThrowsResourceNotFound() async throws {
         let fakeView = BackgroundVideoUIView()
 
-        do {
-            _ = try await fakeView.loadTestAsset(resourceName: "NonExistent", resourceType: "mp4")
-            XCTFail("loadTestAsset should throw an error for non-existent resource.")
-        } catch {
-            // We expect a resourceNotFound error
-            guard let videoError = error as? VideoPlayerError else {
-                XCTFail("Expected VideoPlayerError, got \(error)")
-                return
-            }
-            XCTAssertEqual(videoError, .resourceNotFound)
+        let error = try await #require(throws: VideoPlayerError.self) {
+            try await fakeView.loadTestAsset(resourceName: "NonExistent", resourceType: "mp4")
         }
+        #expect(error == .resourceNotFound)
     }
 
-    @MainActor
-    func test_loadAssetThrowsInvalidResource() async throws {
+    @Test
+    func loadAssetThrowsInvalidResource() async throws {
         let fakeView = BackgroundVideoUIView()
         let bogusURL = URL(fileURLWithPath: "/dev/null")
-        do {
-            _ = try await fakeView.loadTestAsset(url: bogusURL)
-            XCTFail("Loading an unplayable asset should throw .invalidResource.")
-        } catch {
-            guard let videoError = error as? VideoPlayerError else {
-                XCTFail("Expected VideoPlayerError, got \(error)")
-                return
-            }
-            XCTAssertEqual(videoError, .invalidResource)
+
+        let error = try await #require(throws: VideoPlayerError.self) {
+            try await fakeView.loadTestAsset(url: bogusURL)
         }
+        #expect(error == .invalidResource)
     }
-    @MainActor
-    func test_failedLoadAllowsRetryWithSameResource() async {
+
+    @Test
+    func failedLoadAllowsRetryWithSameResource() async {
         let view = BackgroundVideoUIView()
 
         // First attempt: load a non-existent resource, which will fail
         view.prepareAndPlayVideo(with: "NonExistent", ofType: "mp4")
 
         // Wait for the async task to complete
-        // The task sets .failed state on error
         try? await Task.sleep(nanoseconds: 500_000_000)
 
-        XCTAssertEqual(
-            view.playerState,
-            .failed(VideoPlayerError.resourceNotFound),
-            "State should be .failed after loading a non-existent resource."
-        )
+        #expect(view.playerState == .failed(VideoPlayerError.resourceNotFound))
 
         // Verify the root cause fix: resource tracking is reset on failure
-        XCTAssertNil(
-            view.currentResourceName,
-            "currentResourceName should be nil after failure so retry is not blocked."
-        )
-        XCTAssertNil(
-            view.currentResourceType,
-            "currentResourceType should be nil after failure so retry is not blocked."
-        )
+        #expect(view.currentResourceName == nil)
+        #expect(view.currentResourceType == nil)
 
         // Second attempt: retry the same resource
-        // This should NOT be blocked by the currentResourceName/Type guard
         view.prepareAndPlayVideo(with: "NonExistent", ofType: "mp4")
 
-        XCTAssertEqual(
-            view.playerState,
-            .loading,
-            "Retrying the same resource after failure should transition to .loading, not stay .failed."
-        )
+        #expect(view.playerState == .loading)
 
         // Cancel the pending task to clean up
         view.cleanupPlayer()
     }
+
     // MARK: - VideoPlayerState Equatable
 
-    @MainActor
-    func test_VideoPlayerState_equalitySameCases() {
-        XCTAssertEqual(VideoPlayerState.idle, .idle)
-        XCTAssertEqual(VideoPlayerState.loading, .loading)
-        XCTAssertEqual(VideoPlayerState.playing, .playing)
-        XCTAssertEqual(VideoPlayerState.paused, .paused)
+    @Test(arguments: [
+        VideoPlayerState.idle,
+        VideoPlayerState.loading,
+        VideoPlayerState.playing,
+        VideoPlayerState.paused
+    ])
+    func playerStateEqualsSelf(state: VideoPlayerState) {
+        #expect(state == state)
     }
 
-    @MainActor
-    func test_VideoPlayerState_failedCasesAreAlwaysEqual() {
+    @Test
+    func failedCasesAreAlwaysEqual() {
         let state1 = VideoPlayerState.failed(VideoPlayerError.resourceNotFound)
         let state2 = VideoPlayerState.failed(VideoPlayerError.invalidResource)
-        XCTAssertEqual(state1, state2, ".failed cases should be equal regardless of the associated error.")
+        #expect(state1 == state2)
     }
 
-    @MainActor
-    func test_VideoPlayerState_differentCasesAreNotEqual() {
-        XCTAssertNotEqual(VideoPlayerState.idle, .loading)
-        XCTAssertNotEqual(VideoPlayerState.playing, .paused)
-        XCTAssertNotEqual(VideoPlayerState.idle, .failed(VideoPlayerError.resourceNotFound))
+    @Test(arguments: zip(
+        [VideoPlayerState.idle, .playing, .idle],
+        [VideoPlayerState.loading, .paused, .failed(VideoPlayerError.resourceNotFound)]
+    ))
+    func differentPlayerStatesAreNotEqual(lhs: VideoPlayerState, rhs: VideoPlayerState) {
+        #expect(lhs != rhs)
     }
 
     // MARK: - Cancellation
 
-    @MainActor
-    func test_cancelledLoadDoesNotSetFailedState() async {
+    @Test
+    func cancelledLoadDoesNotSetFailedState() async {
         let view = BackgroundVideoUIView()
         var states: [VideoPlayerState] = []
         view.stateDidChange = { state in
@@ -130,7 +108,7 @@ final class SwiftUIBackgroundVideoTests: XCTestCase {
         }
 
         view.prepareAndPlayVideo(with: "NonExistent", ofType: "mp4")
-        XCTAssertEqual(view.playerState, .loading)
+        #expect(view.playerState == .loading)
 
         // Immediately cancel via cleanupPlayer
         view.cleanupPlayer()
@@ -139,10 +117,12 @@ final class SwiftUIBackgroundVideoTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 500_000_000)
 
         let hasFailed = states.contains {
-            if case .failed = $0 { return true }
+            if case .failed = $0 {
+                return true
+            }
             return false
         }
-        XCTAssertFalse(hasFailed, "Cancellation should not produce a .failed state.")
+        #expect(!hasFailed)
     }
 }
 
