@@ -27,7 +27,7 @@ import SwiftUI
 ///             // Your content here
 ///             Text("Welcome")
 ///                 .font(.largeTitle)
-///                 .foregroundColor(.white)
+///                 .foregroundStyle(.white)
 ///         }
 ///     }
 /// }
