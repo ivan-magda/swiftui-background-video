@@ -1,7 +1,5 @@
 @preconcurrency import AVFoundation
-import AVKit
 import UIKit
-import Combine
 
 /// A UIKit view that displays a seamlessly looping background video.
 ///
