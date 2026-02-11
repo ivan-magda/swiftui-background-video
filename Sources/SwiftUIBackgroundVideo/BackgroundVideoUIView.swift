@@ -202,9 +202,7 @@ public final class BackgroundVideoUIView: UIView {
         cleanupPlayer()
 
         loadAssetTask = Task { [weak self] in
-            guard let self else {
-                return
-            }
+            guard let self else { return }
 
             do {
                 let asset = try await self.loadAsset(
@@ -212,17 +210,15 @@ public final class BackgroundVideoUIView: UIView {
                     resourceType: type
                 )
 
-                guard !Task.isCancelled else {
-                    return
-                }
+                guard !Task.isCancelled else { return }
 
-                await MainActor.run {
-                    self.setupPlayer(with: asset)
-                }
+                self.setupPlayer(with: asset)
+            } catch is CancellationError {
+                return
             } catch {
-                await MainActor.run {
-                    self.playerState = .failed(error)
-                }
+                self.currentResourceName = nil
+                self.currentResourceType = nil
+                self.playerState = .failed(error)
             }
         }
     }
@@ -246,6 +242,8 @@ public final class BackgroundVideoUIView: UIView {
             return cachedAsset
         }
 
+        try Task.checkCancellation()
+
         guard let path = Bundle.main.path(forResource: resourceName, ofType: resourceType) else {
             throw VideoPlayerError.resourceNotFound
         }
@@ -254,12 +252,14 @@ public final class BackgroundVideoUIView: UIView {
         let asset = AVAsset(url: url)
 
         let isPlayable = try await loadPlayableStatus(for: asset)
+
+        try Task.checkCancellation()
+
         if !isPlayable {
             throw VideoPlayerError.invalidResource
         }
 
         VideoAssetCache.shared.set(asset: asset, forKey: cacheKey)
-
         return asset
     }
 
