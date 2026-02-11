@@ -26,7 +26,7 @@ import UIKit
 /// }
 /// view.addSubview(videoView)
 /// ```
-public class BackgroundVideoUIView: UIView {
+public final class BackgroundVideoUIView: UIView {
     /// The name of the currently loaded video resource.
     ///
     /// This value is updated when ``prepareAndPlayVideo(with:ofType:)`` is called
@@ -84,6 +84,7 @@ public class BackgroundVideoUIView: UIView {
     ///
     /// Marked `nonisolated(unsafe)` to allow cancellation from `deinit`.
     /// This is safe because `Task.cancel()` is thread-safe.
+    /// TODO: Replace with `isolated deinit` when targeting Swift 6.2+ (iOS 18.4+).
     nonisolated(unsafe) private var loadAssetTask: Task<Void, Never>?
 
     /// A Boolean value indicating whether the video is currently playing.
