@@ -81,11 +81,11 @@ struct ContentView: View {
             .ignoresSafeArea()
 
             Text("Hello, World!")
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .font(.largeTitle)
                 .padding()
                 .background(Color.black.opacity(0.5))
-                .cornerRadius(10)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
 }
@@ -132,7 +132,7 @@ struct ContentView: View {
 
             if let error = errorMessage {
                 Text("Error: \(error)")
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
             }
         }
     }
