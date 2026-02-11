@@ -42,6 +42,8 @@ public struct BackgroundVideoView: UIViewRepresentable {
     let resourceType: String
 
     /// A closure called whenever the player state changes.
+    ///
+    /// Always called on the main actor.
     var onStateChanged: ((VideoPlayerState) -> Void)?
 
     /// Creates a new background video view.
@@ -81,6 +83,10 @@ public struct BackgroundVideoView: UIViewRepresentable {
         self.onStateChanged = onStateChanged
     }
 
+    public func makeCoordinator() -> Coordinator {
+        Coordinator(onStateChanged: onStateChanged)
+    }
+
     /// Cleans up resources when the view is removed from the hierarchy.
     ///
     /// This method ensures proper cleanup of the video player, observers,
@@ -88,8 +94,8 @@ public struct BackgroundVideoView: UIViewRepresentable {
     ///
     /// - Parameters:
     ///   - uiView: The underlying UIKit view being dismantled.
-    ///   - coordinator: The coordinator (unused).
-    public static func dismantleUIView(_ uiView: BackgroundVideoUIView, coordinator: Void) {
+    ///   - coordinator: The coordinator managing state callbacks.
+    public static func dismantleUIView(_ uiView: BackgroundVideoUIView, coordinator: Coordinator) {
         uiView.stateDidChange = nil
         uiView.removeObservers()
         uiView.cleanupPlayer()
@@ -100,7 +106,11 @@ public struct BackgroundVideoView: UIViewRepresentable {
     /// - Parameter context: The context containing environment and coordinator info.
     /// - Returns: A configured ``BackgroundVideoUIView`` instance.
     public func makeUIView(context: Context) -> BackgroundVideoUIView {
-        BackgroundVideoUIView(resourceName: resourceName, resourceType: resourceType)
+        let view = BackgroundVideoUIView()
+        view.stateDidChange = { [weak coordinator = context.coordinator] state in
+            coordinator?.onStateChanged?(state)
+        }
+        return view
     }
 
     /// Updates the underlying UIKit view when SwiftUI state changes.
@@ -112,7 +122,22 @@ public struct BackgroundVideoView: UIViewRepresentable {
     ///   - uiView: The underlying UIKit view to update.
     ///   - context: The context containing environment and coordinator info.
     public func updateUIView(_ uiView: BackgroundVideoUIView, context: Context) {
-        uiView.stateDidChange = onStateChanged
-        uiView.prepareAndPlayVideo(with: resourceName, ofType: resourceType)
+        context.coordinator.onStateChanged = onStateChanged
+
+        if uiView.currentResourceName != resourceName || uiView.currentResourceType != resourceType {
+            uiView.prepareAndPlayVideo(with: resourceName, ofType: resourceType)
+        }
+    }
+
+    /// Stable reference object bridging SwiftUI callbacks to the UIKit view.
+    ///
+    /// Coordinator is only accessed from `@MainActor`-isolated `UIViewRepresentable`
+    /// methods, so it does not need `Sendable` conformance.
+    public final class Coordinator {
+        var onStateChanged: ((VideoPlayerState) -> Void)?
+
+        init(onStateChanged: ((VideoPlayerState) -> Void)?) {
+            self.onStateChanged = onStateChanged
+        }
     }
 }
