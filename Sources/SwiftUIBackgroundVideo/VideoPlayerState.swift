@@ -22,7 +22,11 @@ import Foundation
 ///     }
 /// }
 /// ```
-public enum VideoPlayerState {
+// SAFETY: @unchecked Sendable because all simple cases are value types and the
+// associated Error is only stored, never mutated concurrently. The primary error
+// type (VideoPlayerError) is already Sendable.
+// TODO: Migrate to `any Error & Sendable` in a future breaking API change.
+public enum VideoPlayerState: @unchecked Sendable, Equatable {
     /// The player has been initialized but no video has been loaded.
     ///
     /// This is the initial state before any video resource is requested.
@@ -55,6 +59,17 @@ public enum VideoPlayerState {
     ///
     /// - Parameter error: The error that caused the failure.
     case failed(Error)
+
+    public static func == (lhs: VideoPlayerState, rhs: VideoPlayerState) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle), (.loading, .loading), (.playing, .playing), (.paused, .paused):
+            return true
+        case (.failed, .failed):
+            return true
+        default:
+            return false
+        }
+    }
 
     /// A Boolean value indicating whether the player is currently loading.
     ///
