@@ -310,16 +310,31 @@ public final class BackgroundVideoUIView: UIView {
         self.player = player
         player.isMuted = true
 
-        let playerLayer = AVPlayerLayer(player: player)
-        self.playerLayer = playerLayer
-        playerLayer.videoGravity = .resizeAspectFill
+        let newPlayerLayer = AVPlayerLayer(player: player)
+        self.playerLayer = newPlayerLayer
+        newPlayerLayer.videoGravity = .resizeAspectFill
+        newPlayerLayer.frame = bounds
 
         playerLooper = AVPlayerLooper(player: player, templateItem: playerItem)
 
-        layer.sublayers?
-            .filter { $0 is AVPlayerLayer }
-            .forEach { $0.removeFromSuperlayer() }
-        layer.addSublayer(playerLayer)
+        let oldLayers = layer.sublayers?.filter { $0 is AVPlayerLayer } ?? []
+
+        newPlayerLayer.opacity = 0
+        layer.addSublayer(newPlayerLayer)
+
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.4)
+        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeIn))
+        CATransaction.setCompletionBlock {
+            oldLayers.forEach { $0.removeFromSuperlayer() }
+        }
+
+        newPlayerLayer.opacity = 1
+        for oldLayer in oldLayers {
+            oldLayer.opacity = 0
+        }
+
+        CATransaction.commit()
 
         play()
     }
