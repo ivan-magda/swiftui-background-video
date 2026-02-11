@@ -48,10 +48,6 @@ final class VideoAssetCache {
         )
     }
 
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
     /// Retrieves a cached asset for the specified key.
     ///
     /// The key should be formatted as "resourceName.resourceType"
