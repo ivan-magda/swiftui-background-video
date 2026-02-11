@@ -46,7 +46,9 @@ public final class BackgroundVideoUIView: UIView {
     /// ``VideoPlayerState/failed(_:)`` on error.
     private(set) var playerState: VideoPlayerState = .idle {
         didSet {
-            stateDidChange?(playerState)
+            if playerState != oldValue {
+                stateDidChange?(playerState)
+            }
         }
     }
 
