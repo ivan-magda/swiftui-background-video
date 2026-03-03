@@ -133,6 +133,9 @@ public final class BackgroundVideoUIView: UIView {
     ) {
         super.init(frame: frame)
 
+        isAccessibilityElement = false
+        accessibilityElementsHidden = true
+
         setupObservers()
 
         if let resourceName, let resourceType {
