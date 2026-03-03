@@ -32,5 +32,5 @@ Assets load asynchronously with iOS 15+ using `asset.load(.isPlayable)` and a fa
 ## Package Configuration
 
 - Swift tools version: 6.0
-- Swift language mode: 5
+- Swift language mode: 6 (strict concurrency)
 - Minimum iOS: 13.0
