@@ -38,6 +38,9 @@ public final class BackgroundVideoUIView: UIView {
     /// Common values include "mp4", "mov", and "m4v".
     var currentResourceType: String?
 
+    /// The bundle containing the currently loaded video resource.
+    var currentBundle: Bundle?
+
     /// The current playback state of the video player.
     ///
     /// Observe state changes using the ``stateDidChange`` callback. The state
@@ -121,13 +124,19 @@ public final class BackgroundVideoUIView: UIView {
     ///   - frame: The frame rectangle for the view.
     ///   - resourceName: The name of the video file in the app bundle (without extension).
     ///   - resourceType: The file extension of the video (e.g., "mp4").
-    public init(frame: CGRect = .zero, resourceName: String? = nil, resourceType: String? = nil) {
+    ///   - bundle: The bundle containing the video resource. Defaults to `.main`.
+    public init(
+        frame: CGRect = .zero,
+        resourceName: String? = nil,
+        resourceType: String? = nil,
+        bundle: Bundle = .main
+    ) {
         super.init(frame: frame)
 
         setupObservers()
 
         if let resourceName, let resourceType {
-            prepareAndPlayVideo(with: resourceName, ofType: resourceType)
+            prepareAndPlayVideo(with: resourceName, ofType: resourceType, bundle: bundle)
         }
     }
 
@@ -190,18 +199,20 @@ public final class BackgroundVideoUIView: UIView {
     /// - Parameters:
     ///   - resourceName: The name of the video file in the app bundle (without extension).
     ///   - type: The file extension of the video (e.g., "mp4", "mov").
-    func prepareAndPlayVideo(with resourceName: String, ofType type: String) {
+    ///   - bundle: The bundle containing the video resource. Defaults to `.main`.
+    func prepareAndPlayVideo(with resourceName: String, ofType type: String, bundle: Bundle = .main) {
         guard !playerState.isLoading else {
             return
         }
 
-        guard currentResourceName != resourceName || currentResourceType != type else {
+        guard currentResourceName != resourceName || currentResourceType != type || currentBundle != bundle else {
             return play()
         }
 
         playerState = .loading
         currentResourceName = resourceName
         currentResourceType = type
+        currentBundle = bundle
 
         cleanupPlayer()
 
@@ -213,7 +224,8 @@ public final class BackgroundVideoUIView: UIView {
             do {
                 let asset = try await self.loadAsset(
                     resourceName: resourceName,
-                    resourceType: type
+                    resourceType: type,
+                    bundle: bundle
                 )
 
                 guard !Task.isCancelled else {
@@ -226,6 +238,7 @@ public final class BackgroundVideoUIView: UIView {
             } catch {
                 self.currentResourceName = nil
                 self.currentResourceType = nil
+                self.currentBundle = nil
                 self.playerState = .failed(error)
             }
         }
@@ -240,11 +253,12 @@ public final class BackgroundVideoUIView: UIView {
     /// - Parameters:
     ///   - resourceName: The name of the video file in the app bundle (without extension).
     ///   - resourceType: The file extension of the video (e.g., "mp4").
+    ///   - bundle: The bundle containing the video resource. Defaults to `.main`.
     /// - Returns: A playable `AVAsset` instance.
     /// - Throws: ``VideoPlayerError/resourceNotFound`` if the file doesn't exist,
     ///   or ``VideoPlayerError/invalidResource`` if the file can't be played.
-    func loadAsset(resourceName: String, resourceType: String) async throws -> AVAsset {
-        let cacheKey = "\(resourceName).\(resourceType)"
+    func loadAsset(resourceName: String, resourceType: String, bundle: Bundle = .main) async throws -> AVAsset {
+        let cacheKey = "\(bundle.bundlePath)/\(resourceName).\(resourceType)"
 
         if let cachedAsset = VideoAssetCache.shared.asset(forKey: cacheKey) {
             return cachedAsset
@@ -252,7 +266,7 @@ public final class BackgroundVideoUIView: UIView {
 
         try Task.checkCancellation()
 
-        guard let path = Bundle.main.path(forResource: resourceName, ofType: resourceType) else {
+        guard let path = bundle.path(forResource: resourceName, ofType: resourceType) else {
             throw VideoPlayerError.resourceNotFound
         }
 

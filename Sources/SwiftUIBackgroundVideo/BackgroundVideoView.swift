@@ -41,6 +41,9 @@ public struct BackgroundVideoView: UIViewRepresentable {
     /// The file extension of the video (e.g., "mp4", "mov", "m4v").
     let resourceType: String
 
+    /// The bundle containing the video resource.
+    let bundle: Bundle
+
     /// A closure called whenever the player state changes.
     ///
     /// Always called on the main actor.
@@ -72,14 +75,17 @@ public struct BackgroundVideoView: UIViewRepresentable {
     /// - Parameters:
     ///   - resourceName: The name of the video file in the app bundle (without extension).
     ///   - resourceType: The file extension of the video (e.g., "mp4").
+    ///   - bundle: The bundle containing the video resource. Defaults to `.main`.
     ///   - onStateChanged: An optional closure called when the player state changes.
     public init(
         resourceName: String,
         resourceType: String,
+        bundle: Bundle = .main,
         onStateChanged: ((VideoPlayerState) -> Void)? = nil
     ) {
         self.resourceName = resourceName
         self.resourceType = resourceType
+        self.bundle = bundle
         self.onStateChanged = onStateChanged
     }
 
@@ -124,8 +130,10 @@ public struct BackgroundVideoView: UIViewRepresentable {
     public func updateUIView(_ uiView: BackgroundVideoUIView, context: Context) {
         context.coordinator.onStateChanged = onStateChanged
 
-        if uiView.currentResourceName != resourceName || uiView.currentResourceType != resourceType {
-            uiView.prepareAndPlayVideo(with: resourceName, ofType: resourceType)
+        if uiView.currentResourceName != resourceName ||
+            uiView.currentResourceType != resourceType ||
+            uiView.currentBundle != bundle {
+            uiView.prepareAndPlayVideo(with: resourceName, ofType: resourceType, bundle: bundle)
         }
     }
 
