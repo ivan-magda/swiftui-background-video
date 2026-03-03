@@ -91,7 +91,10 @@ public final class BackgroundVideoUIView: UIView {
 
     /// A Boolean value indicating whether the video is currently playing.
     private var isPlaying: Bool {
-        player?.rate != 0 && player?.error == nil
+        if let player {
+            return player.rate != 0 && player.error == nil
+        }
+        return false
     }
 
     /// Creates a new background video view.
