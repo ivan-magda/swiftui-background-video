@@ -53,7 +53,7 @@ Add SwiftUIBackgroundVideo to your project by adding it as a dependency in your 
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ivan-magda/swiftui-background-video.git", from: "1.2.0")
+    .package(url: "https://github.com/ivan-magda/swiftui-background-video.git", from: "1.3.0")
 ]
 ```
 
