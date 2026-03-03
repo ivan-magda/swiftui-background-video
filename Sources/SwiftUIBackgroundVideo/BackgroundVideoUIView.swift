@@ -350,11 +350,11 @@ public final class BackgroundVideoUIView: UIView {
     ///
     /// Updates ``playerState`` to ``VideoPlayerState/playing``.
     private func play() {
-        guard !isPlaying else {
+        guard let player, !isPlaying else {
             return
         }
 
-        player?.play()
+        player.play()
         playerState = .playing
     }
 
