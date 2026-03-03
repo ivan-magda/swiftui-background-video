@@ -92,6 +92,12 @@ public final class BackgroundVideoUIView: UIView {
     /// Replace with `isolated deinit` when targeting Swift 6.2+ (iOS 18.4+).
     nonisolated(unsafe) private var loadAssetTask: Task<Void, Never>?
 
+    /// Registered notification observer tokens.
+    ///
+    /// Marked `nonisolated(unsafe)` to allow removal from `deinit`.
+    /// This is safe because `NotificationCenter.removeObserver` is thread-safe.
+    nonisolated(unsafe) private var observers: [NSObjectProtocol] = []
+
     /// A Boolean value indicating whether the video is currently playing.
     private var isPlaying: Bool {
         if let player {
@@ -396,8 +402,8 @@ extension BackgroundVideoUIView {
     ///
     /// Called automatically in `deinit` and by ``BackgroundVideoView/dismantleUIView(_:coordinator:)``.
     nonisolated func removeObservers() {
-        // swiftlint:disable:next notification_center_detachment
-        NotificationCenter.default.removeObserver(self)
+        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        observers.removeAll()
     }
 
     /// Registers observers for app lifecycle and audio session events.
@@ -407,60 +413,71 @@ extension BackgroundVideoUIView {
     /// - `didEnterBackgroundNotification`: Pauses playback
     /// - `interruptionNotification`: Handles audio interruptions (e.g., phone calls)
     private func setupObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleApplicationWillEnterForeground),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.willEnterForegroundNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    self?.play()
+                }
+            }
         )
 
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleApplicationDidEnterBackground),
-            name: UIApplication.didEnterBackgroundNotification,
-            object: nil
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.didEnterBackgroundNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    self?.pause()
+                }
+            }
         )
 
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAudioSessionInterruption),
-            name: AVAudioSession.interruptionNotification,
-            object: nil
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: AVAudioSession.interruptionNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                guard let userInfo = notification.userInfo,
+                      let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+                      let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+                    return
+                }
+
+                let interruptionOption = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt
+
+                Task { @MainActor in
+                    self?.handleAudioSessionInterruption(type: type, interruptionOption: interruptionOption)
+                }
+            }
         )
-    }
-
-    /// Resumes video playback when the app returns to the foreground.
-    @objc
-    private func handleApplicationWillEnterForeground() {
-        play()
-    }
-
-    /// Pauses video playback when the app enters the background.
-    @objc
-    private func handleApplicationDidEnterBackground() {
-        pause()
     }
 
     /// Handles audio session interruptions (e.g., incoming phone calls).
     ///
     /// Pauses playback when an interruption begins and resumes when it ends
     /// (if the system indicates resumption is appropriate).
-    @objc
-    private func handleAudioSessionInterruption(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
-            return
-        }
-
+    ///
+    /// - Parameters:
+    ///   - type: The interruption type (began or ended).
+    ///   - interruptionOption: The raw interruption options value, if present.
+    private func handleAudioSessionInterruption(
+        type: AVAudioSession.InterruptionType,
+        interruptionOption: UInt?
+    ) {
         switch type {
         case .began:
             if isPlaying {
                 pause()
             }
         case .ended:
-            if let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt,
-               AVAudioSession.InterruptionOptions(rawValue: optionsValue).contains(.shouldResume) {
+            if let interruptionOption,
+               AVAudioSession.InterruptionOptions(rawValue: interruptionOption).contains(.shouldResume) {
                 play()
             }
         @unknown default:
