@@ -32,6 +32,9 @@ final class VideoAssetCache {
     /// The underlying cache storage.
     private let cache = NSCache<NSString, AVAsset>()
 
+    /// The memory warning notification observer token.
+    private var memoryWarningObserver: (any NSObjectProtocol)?
+
     /// Creates a new cache instance.
     ///
     /// This initializer is private to enforce the singleton pattern.
@@ -40,12 +43,15 @@ final class VideoAssetCache {
     private init() {
         cache.countLimit = Self.maxCacheSize
 
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleMemoryWarning),
-            name: UIApplication.didReceiveMemoryWarningNotification,
-            object: nil
-        )
+        memoryWarningObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.clearCache()
+            }
+        }
     }
 
     /// Retrieves a cached asset for the specified key.
@@ -78,11 +84,5 @@ final class VideoAssetCache {
     /// receives a memory warning.
     func clearCache() {
         cache.removeAllObjects()
-    }
-
-    /// Handles memory warning notifications by clearing the cache.
-    @objc
-    private func handleMemoryWarning() {
-        clearCache()
     }
 }
