@@ -60,6 +60,7 @@ struct SwiftUIBackgroundVideoTests {
         // Verify the root cause fix: resource tracking is reset on failure
         #expect(view.currentResourceName == nil)
         #expect(view.currentResourceType == nil)
+        #expect(view.currentBundle == nil)
 
         // Second attempt: retry the same resource
         view.prepareAndPlayVideo(with: "NonExistent", ofType: "mp4")
