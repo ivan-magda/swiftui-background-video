@@ -205,20 +205,21 @@ class ViewController: UIViewController {
 
 ### BackgroundVideoView (SwiftUI)
 
-| Parameter        | Type                            | Description                         |
-| ---------------- | ------------------------------- | ----------------------------------- |
-| `resourceName`   | `String`                        | Video filename without extension    |
-| `resourceType`   | `String`                        | File extension (e.g., "mp4", "mov") |
-| `onStateChanged` | `((VideoPlayerState) -> Void)?` | Optional state change callback      |
+| Parameter        | Type                            | Description                                    |
+| ---------------- | ------------------------------- | ---------------------------------------------- |
+| `resourceName`   | `String`                        | Video filename without extension               |
+| `resourceType`   | `String`                        | File extension (e.g., "mp4", "mov")            |
+| `bundle`         | `Bundle`                        | Bundle containing the video (default: `.main`) |
+| `onStateChanged` | `((VideoPlayerState) -> Void)?` | Optional state change callback                 |
 
 ### BackgroundVideoUIView (UIKit)
 
-| Property/Method                     | Type                            | Description                         |
-| ----------------------------------- | ------------------------------- | ----------------------------------- |
-| `stateDidChange`                    | `((VideoPlayerState) -> Void)?` | State change callback               |
-| `playerState`                       | `VideoPlayerState`              | Current playback state (read-only)  |
-| `prepareAndPlayVideo(with:ofType:)` | Method                          | Load and play a different video     |
-| `cleanupPlayer()`                   | Method                          | Stop playback and release resources |
+| Property/Method                            | Type                            | Description                         |
+| ------------------------------------------ | ------------------------------- | ----------------------------------- |
+| `stateDidChange`                           | `((VideoPlayerState) -> Void)?` | State change callback               |
+| `playerState`                              | `VideoPlayerState`              | Current playback state (read-only)  |
+| `prepareAndPlayVideo(with:ofType:bundle:)` | Method                          | Load and play a different video     |
+| `cleanupPlayer()`                          | Method                          | Stop playback and release resources |
 
 ### VideoPlayerState
 

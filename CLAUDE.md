@@ -20,14 +20,14 @@ This is a Swift Package providing a looping background video component for Swift
 
 **Player Lifecycle:**
 
-The UIView handles app lifecycle automatically via NotificationCenter observers:
+The UIView handles app lifecycle automatically via closure-based NotificationCenter observers. Closures use `Task { @MainActor in }` to cross the `@Sendable` → `@MainActor` isolation boundary:
 - Pauses on `didEnterBackground`
 - Resumes on `willEnterForeground`
 - Handles audio session interruptions
 
 **Asset Loading:**
 
-Assets load asynchronously with iOS 15+ using `asset.load(.isPlayable)` and a fallback for earlier iOS versions using `loadValuesAsynchronously`.
+Assets load asynchronously with iOS 15+ using `asset.load(.isPlayable)` and a fallback for earlier iOS versions using `loadValuesAsynchronously`. A `bundle` parameter (default `.main`) allows loading videos from any bundle.
 
 ## Package Configuration
 
