@@ -58,14 +58,14 @@ public final class BackgroundVideoUIView: UIView {
     /// such as showing a loading indicator or handling errors.
     ///
     /// ```swift
-    /// videoView.stateDidChange = { state in
+    /// videoView.stateDidChange = { [weak self] state in
     ///     switch state {
     ///     case .loading:
-    ///         self.showSpinner()
+    ///         self?.showSpinner()
     ///     case .playing:
-    ///         self.hideSpinner()
+    ///         self?.hideSpinner()
     ///     case .failed(let error):
-    ///         self.showError(error)
+    ///         self?.showError(error)
     ///     default:
     ///         break
     ///     }
