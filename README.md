@@ -5,51 +5,49 @@
 [![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-Seamless looping background videos for SwiftUI-because `VideoPlayer` can't loop and nobody wants 80 lines of AVPlayerLooper boilerplate.
+Seamless looping background videos for SwiftUI, in one view. No configuration, no dependencies, iOS 13+.
 
 <p align="leading">
   <img src="demo/demo-basic.gif" width="240" alt="Basic Demo">&nbsp;&nbsp;&nbsp;&nbsp;<img src="demo/demo-theme.gif" width="240" alt="Theme-Aware Demo">
 </p>
 
-## Why SwiftUIBackgroundVideo?
+## Table of Contents
 
-SwiftUI's native `VideoPlayer` can't loop videos or hide controls-it's designed for interactive playback, not backgrounds. The standard fix requires wrapping `AVQueuePlayer` + `AVPlayerLooper` in `UIViewRepresentable`, handling app lifecycle (background/foreground), audio interruptions, and memory management.
+- [Background](#background)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
-This package does all of that in 3 lines:
+## Background
+
+SwiftUI's `VideoPlayer` targets interactive playback. It can't loop a clip or hide its controls, so it won't work as a background. The usual workaround wraps `AVQueuePlayer` and `AVPlayerLooper` in a `UIViewRepresentable`, then adds handling for app lifecycle, audio interruptions, and asset memory. That's dozens of lines you copy from Stack Overflow into every project.
+
+`SwiftUIBackgroundVideo` packages that work behind a single view:
 
 ```swift
 BackgroundVideoView(resourceName: "background", resourceType: "mp4")
 ```
 
-**Alternatives:**
-
-| Package                      | Verdict                                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| **swiftui-loop-videoPlayer** | Feature-heavy (subtitles, Metal shaders, PiP). Good if you need those; overkill for backgrounds. |
-| **SwiftVideoBackground**     | UIKit-only, last updated 2019, no SPM support.                                                   |
-| **DIY**                      | 80+ lines of boilerplate you'll copy from Stack Overflow anyway.                                 |
+Looping runs on `AVPlayerLooper` rather than notification-based seeking, so there are no gaps at the loop point. The view pauses when the app backgrounds, resumes on return, survives phone calls and other audio interruptions, and caches decoded assets through an `NSCache` that clears itself on a memory warning.
 
 ## Features
 
-- **3-line integration** - Drop `BackgroundVideoView` into any SwiftUI view
-- **Truly seamless loops** - Uses `AVPlayerLooper`, not notification-based seeking (no 100ms gaps)
-- **Asset caching** - `NSCache`-backed, max 3 assets, auto-clears on memory warning
-- **Lifecycle-aware** - Auto-pauses on background, resumes on foreground
-- **Audio interruption handling** - Phone calls won't break your player
-- **UIKit support** - Use `BackgroundVideoUIView` directly if needed
-- **iOS 13+** - Works on 99%+ of devices in the wild
-
-## Requirements
-
-- iOS 13.0+
-- Swift 6.0+
-- Xcode 16+
+- Drop `BackgroundVideoView` into any SwiftUI view with two arguments
+- Gapless looping via `AVPlayerLooper`, not notification-based seeking
+- Asset caching backed by `NSCache` (up to 3 assets), cleared on memory warnings
+- Auto-pauses in the background and resumes in the foreground
+- Survives audio interruptions such as incoming calls
+- A `VideoPlayerState` callback for loading, playback, and error states
+- iOS 13.0 and later, no third-party dependencies
 
 ## Installation
 
 ### Swift Package Manager
 
-Add SwiftUIBackgroundVideo to your project by adding it as a dependency in your `Package.swift` file:
+Add the dependency to your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -57,15 +55,28 @@ dependencies: [
 ]
 ```
 
-Or add it directly through Xcode:
+Then list the product as a target dependency:
 
-1. Go to **File → Add Packages...**
-2. Enter package URL: `https://github.com/ivan-magda/swiftui-background-video.git`
-3. Click **Add Package**
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: [
+        .product(name: "SwiftUIBackgroundVideo", package: "swiftui-background-video")
+    ]
+)
+```
+
+### Xcode
+
+1. Open **File → Add Package Dependencies...**
+2. Enter the package URL: `https://github.com/ivan-magda/swiftui-background-video.git`
+3. Choose the version rule and add the **SwiftUIBackgroundVideo** library to your target.
 
 ## Usage
 
-### SwiftUI
+Add your video file to the app target, then place `BackgroundVideoView` behind your content in a `ZStack`.
+
+### Basic
 
 ```swift
 import SwiftUI
@@ -91,9 +102,22 @@ struct ContentView: View {
 }
 ```
 
-### Handling State Changes
+### Loading a video from another bundle
 
-Monitor loading, playback, and errors:
+Pass a `bundle` when the asset lives outside `.main`, such as in a resource module:
+
+```swift
+BackgroundVideoView(
+    resourceName: "background_video",
+    resourceType: "mp4",
+    bundle: .module
+)
+.ignoresSafeArea()
+```
+
+### Reacting to state
+
+The trailing closure receives a `VideoPlayerState` on every transition. Use it to show a spinner while the asset loads or to surface an error:
 
 ```swift
 import SwiftUI
@@ -110,14 +134,12 @@ struct ContentView: View {
                 resourceType: "mp4"
             ) { state in
                 switch state {
-                case .idle:
+                case .idle, .paused:
                     break
                 case .loading:
                     isLoading = true
                 case .playing:
                     isLoading = false
-                case .paused:
-                    break
                 case .failed(let error):
                     isLoading = false
                     errorMessage = error.localizedDescription
@@ -130,8 +152,8 @@ struct ContentView: View {
                     .scaleEffect(1.5)
             }
 
-            if let error = errorMessage {
-                Text("Error: \(error)")
+            if let errorMessage {
+                Text("Error: \(errorMessage)")
                     .foregroundStyle(.red)
             }
         }
@@ -139,123 +161,57 @@ struct ContentView: View {
 }
 ```
 
-### UIKit
+### Initializer
 
 ```swift
-import UIKit
-import SwiftUIBackgroundVideo
-
-class ViewController: UIViewController {
-
-    private var videoView: BackgroundVideoUIView?
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Create and add the video view
-        videoView = BackgroundVideoUIView(
-            frame: view.bounds,
-            resourceName: "background_video",
-            resourceType: "mp4"
-        )
-        videoView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-
-        if let videoView = videoView {
-            view.addSubview(videoView)
-        }
-
-        // Monitor state changes
-        videoView?.stateDidChange = { state in
-            switch state {
-            case .loading:
-                print("Loading video...")
-            case .playing:
-                print("Video playing")
-            case .paused:
-                print("Video paused")
-            case .failed(let error):
-                print("Error: \(error.localizedDescription)")
-            default:
-                break
-            }
-        }
-
-        // Add content on top
-        let label = UILabel()
-        label.text = "Hello, World!"
-        label.textColor = .white
-        label.font = .preferredFont(forTextStyle: .largeTitle)
-        label.textAlignment = .center
-        label.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        label.layer.cornerRadius = 10
-        label.clipsToBounds = true
-        label.translatesAutoresizingMaskIntoConstraints = false
-
-        view.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            label.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -40)
-        ])
-    }
-}
+BackgroundVideoView(
+    resourceName: String,
+    resourceType: String,
+    bundle: Bundle = .main,
+    onStateChanged: ((VideoPlayerState) -> Void)? = nil
+)
 ```
 
-## API Reference
-
-### BackgroundVideoView (SwiftUI)
-
-| Parameter        | Type                            | Description                                    |
-| ---------------- | ------------------------------- | ---------------------------------------------- |
-| `resourceName`   | `String`                        | Video filename without extension               |
-| `resourceType`   | `String`                        | File extension (e.g., "mp4", "mov")            |
-| `bundle`         | `Bundle`                        | Bundle containing the video (default: `.main`) |
-| `onStateChanged` | `((VideoPlayerState) -> Void)?` | Optional state change callback                 |
-
-### BackgroundVideoUIView (UIKit)
-
-| Property/Method                            | Type                            | Description                         |
-| ------------------------------------------ | ------------------------------- | ----------------------------------- |
-| `stateDidChange`                           | `((VideoPlayerState) -> Void)?` | State change callback               |
-| `playerState`                              | `VideoPlayerState`              | Current playback state (read-only)  |
-| `prepareAndPlayVideo(with:ofType:bundle:)` | Method                          | Load and play a different video     |
-| `cleanupPlayer()`                          | Method                          | Stop playback and release resources |
+| Parameter        | Type                            | Description                                     |
+| ---------------- | ------------------------------- | ----------------------------------------------- |
+| `resourceName`   | `String`                        | Video filename without its extension            |
+| `resourceType`   | `String`                        | File extension, for example `"mp4"` or `"mov"`  |
+| `bundle`         | `Bundle`                        | Bundle holding the video (default `.main`)      |
+| `onStateChanged` | `((VideoPlayerState) -> Void)?` | State callback, runs on the main actor          |
 
 ### VideoPlayerState
 
 | Case             | Description                               |
 | ---------------- | ----------------------------------------- |
-| `.idle`          | Player initialized, no video loaded       |
-| `.loading`       | Video asset loading asynchronously        |
-| `.playing`       | Video actively playing                    |
-| `.paused`        | Playback paused (background/interruption) |
+| `.idle`          | View created, no video loaded yet         |
+| `.loading`       | Asset loading asynchronously              |
+| `.playing`       | Video playing                             |
+| `.paused`        | Paused after backgrounding or interruption|
 | `.failed(Error)` | Loading or playback failed                |
 
-### VideoPlayerError
+A `.failed` case carries a `VideoPlayerError`: `.resourceNotFound` when the file is missing from the bundle, `.invalidResource` when the file exists but can't play, and `.playbackFailed` for a runtime failure.
 
-| Case                | Description                     |
-| ------------------- | ------------------------------- |
-| `.resourceNotFound` | Video file not in app bundle    |
-| `.invalidResource`  | File exists but can't be played |
-| `.playbackFailed`   | Runtime playback error          |
+## Project Structure
 
-## How It Works
+```
+Sources/SwiftUIBackgroundVideo/
+├── BackgroundVideoView.swift     // SwiftUI view, public entry point
+├── BackgroundVideoUIView.swift   // UIKit view backing the representable
+├── VideoAssetCache.swift         // NSCache-based asset store
+├── VideoPlayerState.swift        // Player state enum
+└── VideoPlayerError.swift        // Error cases
+```
 
-Under the hood, SwiftUIBackgroundVideo uses Apple's recommended approach for seamless video looping:
-
-1. **AVQueuePlayer + AVPlayerLooper** - The "treadmill pattern" from WWDC 2016 that cycles player items without gaps
-2. **AVPlayerLayer** - Hardware-accelerated video rendering with aspect-fill scaling
-3. **NSCache** - Lightweight asset caching (max 3 videos) with automatic memory warning cleanup
-4. **NotificationCenter** - Observes `willEnterForeground`, `didEnterBackground`, and `interruptionNotification` for proper lifecycle handling
+`BackgroundVideoView` is a `UIViewRepresentable` that wraps `BackgroundVideoUIView`. The UIKit view runs an `AVQueuePlayer` with an `AVPlayerLooper`, renders through an `AVPlayerLayer` with aspect-fill scaling, and registers `NotificationCenter` observers for foreground, background, and audio-interruption events.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Issues and pull requests are welcome. Open an issue to discuss larger changes before sending a PR.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Released under the MIT License. See [LICENSE](LICENSE) for the full text.
 
 ## Author
 
-**Ivan Magda** - [@ivan-magda](https://github.com/ivan-magda)
+**Ivan Magda**, [@ivan-magda](https://github.com/ivan-magda)
