@@ -1,8 +1,7 @@
 # SwiftUIBackgroundVideo
 
-[![Swift](https://img.shields.io/badge/Swift-6.0+-orange?style=flat-square)](https://img.shields.io/badge/Swift-6.0+-orange?style=flat-square)
-[![Platforms](https://img.shields.io/badge/Platforms-iOS-yellowgreen?style=flat-square)](https://img.shields.io/badge/Platforms-iOS-green?style=flat-square)
-[![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
+[![Swift versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fivan-magda%2Fswiftui-background-video%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/ivan-magda/swiftui-background-video)
+[![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fivan-magda%2Fswiftui-background-video%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/ivan-magda/swiftui-background-video)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 Seamless looping background videos for SwiftUI, in one view. No configuration, no dependencies, iOS 13+.
